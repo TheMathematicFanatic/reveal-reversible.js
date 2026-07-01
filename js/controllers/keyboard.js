@@ -305,7 +305,10 @@ export default class Keyboard {
 			}
 			// K, UP
 			else if( keyCode === 75 || keyCode === 38 ) {
-				if( event.shiftKey ) {
+				if( this.Reveal.getConfig().instantNavigation && !this.Reveal.overview.isActive() && !event.shiftKey ) {
+					this.Reveal.reverseAnimation.restNavigate( 'prev' );
+				}
+				else if( event.shiftKey ) {
 					this.Reveal.slide( undefined, 0 );
 				}
 				else if( !this.Reveal.overview.isActive() && useLinearMode ) {
@@ -317,7 +320,10 @@ export default class Keyboard {
 			}
 			// J, DOWN
 			else if( keyCode === 74 || keyCode === 40 ) {
-				if( event.shiftKey ) {
+				if( this.Reveal.getConfig().instantNavigation && !this.Reveal.overview.isActive() && !event.shiftKey ) {
+					this.Reveal.reverseAnimation.restNavigate( 'next' );
+				}
+				else if( event.shiftKey ) {
 					this.Reveal.slide( undefined, Number.MAX_VALUE );
 				}
 				else if( !this.Reveal.overview.isActive() && useLinearMode ) {

@@ -531,6 +531,17 @@ interface RevealConfig {
 	reverseBackgroundVideos?: boolean;
 
 	/**
+	 * Repurposes the up/down arrow keys to "jump" between adjacent slides
+	 * instantly, resting on the destination's still frame without playing its
+	 * animation. Left/right continue to play animations (forwards, and in
+	 * reverse when navigating back). Intended for linear, horizontal decks
+	 * where every slide is an animation into a still frame.
+	 *
+	 * @defaultValue false
+	 */
+	instantNavigation?: boolean;
+
+	/**
 	 * Optionally provide a custom element matcher that will be
 	 * used to dictate which elements we can animate between.
 	 *
@@ -925,6 +936,7 @@ const defaultConfig: RevealConfig = {
 	autoAnimate: true,
 	reverseAnimations: true,
 	reverseBackgroundVideos: false,
+	instantNavigation: false,
 	autoAnimateMatcher: null,
 	autoAnimateEasing: 'ease',
 	autoAnimateDuration: 1.0,

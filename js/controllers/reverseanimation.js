@@ -313,6 +313,34 @@ export default class ReverseAnimation {
 	}
 
 	/**
+	 * Navigate to the previous/next slide *without* playing any animation,
+	 * resting the destination on its still (final) frame. This is the
+	 * counterpart to the animated left/right navigation and is used for
+	 * "jump" navigation, e.g. bound to the up/down arrow keys via the
+	 * `instantNavigation` config option.
+	 *
+	 * @param {'next'|'prev'} direction
+	 */
+	restNavigate( direction ) {
+
+		let navigate = direction === 'next' ? this.Reveal.navigateRight : this.Reveal.navigateLeft;
+
+		// replaying: skip the reverse-animation interception on backwards moves.
+		// suppressAutoplay: rest the destination media on its final frame
+		// rather than playing its animation.
+		this.replaying = true;
+		this.suppressAutoplay = true;
+		try {
+			navigate( { skipFragments: true } );
+		}
+		finally {
+			this.suppressAutoplay = false;
+			this.replaying = false;
+		}
+
+	}
+
+	/**
 	 * Rests a reversible media element on its final frame (its still image),
 	 * paused. This is the state a frame settles into after its incoming
 	 * animation has played, and the state we want when landing on a frame by

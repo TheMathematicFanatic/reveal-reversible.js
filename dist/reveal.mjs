@@ -923,6 +923,15 @@ var ee = class {
 		let r = e.parentNode;
 		return getComputedStyle(r).position === "static" && (r.style.position = "relative"), n.style.position = "absolute", n.style.left = e.offsetLeft + "px", n.style.top = e.offsetTop + "px", n.style.width = e.offsetWidth + "px", n.style.height = e.offsetHeight + "px", n.style.objectFit = getComputedStyle(e).objectFit, n.style.zIndex = 10, n;
 	}
+	restNavigate(e) {
+		let t = e === "next" ? this.Reveal.navigateRight : this.Reveal.navigateLeft;
+		this.replaying = !0, this.suppressAutoplay = !0;
+		try {
+			t({ skipFragments: !0 });
+		} finally {
+			this.suppressAutoplay = !1, this.replaying = !1;
+		}
+	}
 	restMedia(e) {
 		let t = () => {
 			try {
@@ -1531,7 +1540,7 @@ var ue = class {
 				typeof t == "function" ? t.apply(null, [e]) : typeof t == "string" && typeof this.Reveal[t] == "function" && this.Reveal[t].call(), f = !0;
 			}
 		}
-		f === !1 && (f = !0, n === 80 || n === 33 ? this.Reveal.prev({ skipFragments: e.altKey }) : n === 78 || n === 34 ? this.Reveal.next({ skipFragments: e.altKey }) : n === 72 || n === 37 ? e.shiftKey ? this.Reveal.slide(0) : !this.Reveal.overview.isActive() && d ? t.rtl ? this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.left({ skipFragments: e.altKey }) : n === 76 || n === 39 ? e.shiftKey ? this.Reveal.slide(this.Reveal.getHorizontalSlides().length - 1) : !this.Reveal.overview.isActive() && d ? t.rtl ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.right({ skipFragments: e.altKey }) : n === 75 || n === 38 ? e.shiftKey ? this.Reveal.slide(void 0, 0) : !this.Reveal.overview.isActive() && d ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.up({ skipFragments: e.altKey }) : n === 74 || n === 40 ? e.shiftKey ? this.Reveal.slide(void 0, Number.MAX_VALUE) : !this.Reveal.overview.isActive() && d ? this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.down({ skipFragments: e.altKey }) : n === 36 ? this.Reveal.slide(0) : n === 35 ? this.Reveal.slide(this.Reveal.getHorizontalSlides().length - 1) : n === 32 ? (this.Reveal.overview.isActive() && this.Reveal.overview.deactivate(), e.shiftKey ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.next({ skipFragments: e.altKey })) : [
+		f === !1 && (f = !0, n === 80 || n === 33 ? this.Reveal.prev({ skipFragments: e.altKey }) : n === 78 || n === 34 ? this.Reveal.next({ skipFragments: e.altKey }) : n === 72 || n === 37 ? e.shiftKey ? this.Reveal.slide(0) : !this.Reveal.overview.isActive() && d ? t.rtl ? this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.left({ skipFragments: e.altKey }) : n === 76 || n === 39 ? e.shiftKey ? this.Reveal.slide(this.Reveal.getHorizontalSlides().length - 1) : !this.Reveal.overview.isActive() && d ? t.rtl ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.right({ skipFragments: e.altKey }) : n === 75 || n === 38 ? this.Reveal.getConfig().instantNavigation && !this.Reveal.overview.isActive() && !e.shiftKey ? this.Reveal.reverseAnimation.restNavigate("prev") : e.shiftKey ? this.Reveal.slide(void 0, 0) : !this.Reveal.overview.isActive() && d ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.up({ skipFragments: e.altKey }) : n === 74 || n === 40 ? this.Reveal.getConfig().instantNavigation && !this.Reveal.overview.isActive() && !e.shiftKey ? this.Reveal.reverseAnimation.restNavigate("next") : e.shiftKey ? this.Reveal.slide(void 0, Number.MAX_VALUE) : !this.Reveal.overview.isActive() && d ? this.Reveal.next({ skipFragments: e.altKey }) : this.Reveal.down({ skipFragments: e.altKey }) : n === 36 ? this.Reveal.slide(0) : n === 35 ? this.Reveal.slide(this.Reveal.getHorizontalSlides().length - 1) : n === 32 ? (this.Reveal.overview.isActive() && this.Reveal.overview.deactivate(), e.shiftKey ? this.Reveal.prev({ skipFragments: e.altKey }) : this.Reveal.next({ skipFragments: e.altKey })) : [
 			58,
 			59,
 			66,
@@ -2206,6 +2215,7 @@ var me = class {
 	autoAnimate: !0,
 	reverseAnimations: !0,
 	reverseBackgroundVideos: !1,
+	instantNavigation: !1,
 	autoAnimateMatcher: null,
 	autoAnimateEasing: "ease",
 	autoAnimateDuration: 1,
