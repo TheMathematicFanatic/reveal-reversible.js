@@ -838,7 +838,7 @@ var ee = class {
 	}
 }, se = class {
 	constructor(e) {
-		this.Reveal = e, this.isReversing = !1, this.forwardBusyElement = null, this.replaying = !1, this.suppressAutoplay = !1, this._cancel = null;
+		this.Reveal = e, this.isReversing = !1, this.forwardBusyElement = null, this.replaying = !1, this.suppressAutoplay = !1;
 	}
 	isEnabled() {
 		return this.Reveal.getConfig().reverseAnimations !== !1;
@@ -860,26 +860,16 @@ var ee = class {
 	_clearForwardBusy(e) {
 		this.forwardBusyElement === e && (this.forwardBusyElement = null);
 	}
-	_fastForwardCurrentForward() {
-		let e = this.forwardBusyElement;
-		if (e) {
-			try {
-				e.pause(), isFinite(e.duration) && (e.currentTime = e.duration);
-			} catch (e) {}
-			this._clearForwardBusy(e);
-		}
-	}
 	handleBackward(e) {
 		if (this.replaying || !this.isEnabled() || this.Reveal.getConfig().rtl || this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView()) return !1;
-		if (this.forwardBusyElement) return this._fastForwardCurrentForward(), !0;
-		if (this.isReversing) return this._cancel && this._cancel(), !0;
+		if (this.isBusy()) return !0;
 		let t = this.getReversibleTarget();
 		return t ? (this.isReversing = !0, this.playReverse(t.media).then(() => {
-			this.isReversing = !1, this._cancel = null, this.suppressAutoplay = !0, this.replaying = !0, e(), this.replaying = !1, this.suppressAutoplay = !1;
+			this.isReversing = !1, this.suppressAutoplay = !0, this.replaying = !0, e(), this.replaying = !1, this.suppressAutoplay = !1;
 		}), !0) : !1;
 	}
 	guardForward() {
-		return this.replaying || !this.isEnabled() || this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ? !1 : this.isReversing ? (this._cancel && this._cancel(), !0) : this.forwardBusyElement ? (this._fastForwardCurrentForward(), !0) : !1;
+		return this.replaying || !this.isEnabled() || this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ? !1 : !!this.isBusy();
 	}
 	getReversibleTarget() {
 		let e = this.Reveal.getCurrentSlide();
@@ -922,7 +912,7 @@ var ee = class {
 					t.removeEventListener("ended", n), t.pause(), t.style.display = "none";
 				}, t.addEventListener("ended", n), t.currentTime = 0, t.style.display = "block";
 				let o = t.play();
-				o && typeof o.catch == "function" && o.catch(() => i()), this._cancel = () => i();
+				o && typeof o.catch == "function" && o.catch(() => i());
 			} else {
 				let t = null, n = null, a = e.playbackRate || 1;
 				e.pause(), isFinite(e.duration) && e.currentTime === 0 && (e.currentTime = Math.max(0, e.duration - .001));
@@ -939,11 +929,6 @@ var ee = class {
 				};
 				r = () => {
 					t && cancelAnimationFrame(t);
-				}, this._cancel = () => {
-					try {
-						e.currentTime = 0;
-					} catch (e) {}
-					i();
 				}, t = requestAnimationFrame(o);
 			}
 		});

@@ -42,8 +42,8 @@ export default class ReverseAnimation {
 
 		this.Reveal = Reveal;
 
-		// True while a reverse animation is playing. Guards against re-entrancy
-		// and lets a second backwards key press fast-forward to the end.
+		// True while a reverse animation is playing. Navigation keys are
+		// ignored entirely while this is true.
 		this.isReversing = false;
 
 		// The reversible media element (if any) that is currently mid-way
@@ -58,9 +58,6 @@ export default class ReverseAnimation {
 		// While true, SlideContent will rest reversible media on its final
 		// frame instead of autoplaying it forward when a frame becomes visible.
 		this.suppressAutoplay = false;
-
-		// Cancels the reverse animation that is currently in flight, if any.
-		this._cancel = null;
 
 	}
 
@@ -152,30 +149,14 @@ export default class ReverseAnimation {
 	}
 
 	/**
-	 * Fast-forwards the forward animation currently in flight (if any) to its
-	 * resting frame, immediately unblocking navigation. Used when a forward
-	 * key is pressed again while a forward animation is still playing.
-	 */
-	_fastForwardCurrentForward() {
-
-		let media = this.forwardBusyElement;
-		if( !media ) return;
-
-		try {
-			media.pause();
-			if( isFinite( media.duration ) ) media.currentTime = media.duration;
-		}
-		catch( e ) {}
-
-		this._clearForwardBusy( media );
-
-	}
-
-	/**
-	 * Called at the top of the backwards navigation methods. If the current
-	 * frame has a reversible incoming animation this takes over: it plays that
-	 * animation in reverse and, once complete, runs `replayNavigation()` to
-	 * perform the actual backwards move (with autoplay suppressed on arrival).
+	 * Called at the top of the backwards navigation methods. If an animation
+	 * is already in flight (forward or backward), this key press is ignored
+	 * entirely — nothing is interrupted, nothing is fast-forwarded, the
+	 * in-flight animation just keeps playing to its natural end. Otherwise,
+	 * if the current frame has a reversible incoming animation, this takes
+	 * over: it plays that animation in reverse and, once complete, runs
+	 * `replayNavigation()` to perform the actual backwards move (with
+	 * autoplay suppressed on arrival).
 	 *
 	 * @param {function} replayNavigation The original navigation call to run
 	 * once the reverse animation has finished.
@@ -193,19 +174,9 @@ export default class ReverseAnimation {
 		if( this.Reveal.getConfig().rtl ) return false;
 		if( this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ) return false;
 
-		// A forward animation is still playing; catch it up to its resting
-		// frame instead of starting a reverse mid-flight (which would race
-		// with the forward animation's own completion handling).
-		if( this.forwardBusyElement ) {
-			this._fastForwardCurrentForward();
-			return true;
-		}
-
-		// A second backwards press while reversing fast-forwards to the end
-		if( this.isReversing ) {
-			if( this._cancel ) this._cancel();
-			return true;
-		}
+		// An animation (forward or backward) is already in flight; ignore
+		// this key press entirely rather than interrupting it.
+		if( this.isBusy() ) return true;
 
 		let target = this.getReversibleTarget();
 		if( !target ) return false;
@@ -215,7 +186,6 @@ export default class ReverseAnimation {
 		this.playReverse( target.media ).then( () => {
 
 			this.isReversing = false;
-			this._cancel = null;
 
 			// Perform the real backwards navigation, resting the destination
 			// frame's incoming media on its final frame rather than replaying
@@ -234,19 +204,8 @@ export default class ReverseAnimation {
 
 	/**
 	 * Called at the top of the forward navigation methods (navigateRight,
-	 * navigateDown, navigateNext). Mirrors `handleBackward`'s re-entrancy
-	 * guard from the other direction:
-	 *
-	 *   - If a reverse animation is currently playing, this press fast-
-	 *     forwards it to completion instead of starting a new forward move
-	 *     (which would otherwise race with the reverse's own completion
-	 *     handling and land on the wrong frame).
-	 *   - If a forward animation is currently playing, this press fast-
-	 *     forwards it to its resting frame instead of triggering another
-	 *     navigation on top of it.
-	 *
-	 * Either way, this press is swallowed; a subsequent press proceeds
-	 * normally once the in-flight animation has settled.
+	 * navigateDown, navigateNext). If an animation is already in flight
+	 * (forward or backward), this key press is ignored entirely.
 	 *
 	 * @return {boolean} true if this controller has swallowed the navigation
 	 * attempt and the caller should return immediately.
@@ -259,15 +218,7 @@ export default class ReverseAnimation {
 		if( !this.isEnabled() ) return false;
 		if( this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ) return false;
 
-		if( this.isReversing ) {
-			if( this._cancel ) this._cancel();
-			return true;
-		}
-
-		if( this.forwardBusyElement ) {
-			this._fastForwardCurrentForward();
-			return true;
-		}
+		if( this.isBusy() ) return true;
 
 		return false;
 
@@ -326,8 +277,7 @@ export default class ReverseAnimation {
 	 * Plays the given media element in reverse.
 	 *
 	 * @param {HTMLMediaElement} media
-	 * @return {Promise} resolves once the reverse animation has finished (or
-	 * has been fast-forwarded).
+	 * @return {Promise} resolves once the reverse animation has finished.
 	 */
 	playReverse( media ) {
 
@@ -367,9 +317,6 @@ export default class ReverseAnimation {
 					promise.catch( () => finish() );
 				}
 
-				// Fast-forward jumps straight to the reversed end state
-				this._cancel = () => finish();
-
 			}
 			else {
 
@@ -403,13 +350,6 @@ export default class ReverseAnimation {
 
 				cleanup = () => {
 					if( rafId ) cancelAnimationFrame( rafId );
-				};
-
-				// Fast-forward snaps to the start of the clip (the previous
-				// frame's resting image)
-				this._cancel = () => {
-					try { media.currentTime = 0; } catch( e ) {}
-					finish();
 				};
 
 				rafId = requestAnimationFrame( step );
