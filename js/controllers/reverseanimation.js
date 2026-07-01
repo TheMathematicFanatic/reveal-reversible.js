@@ -1,4 +1,4 @@
-import { queryAll } from '../utils/util'
+import { queryAll, closest } from '../utils/util'
 
 /**
  * Handles playing a frame's incoming animation *in reverse* when the
@@ -46,6 +46,11 @@ export default class ReverseAnimation {
 		// and lets a second backwards key press fast-forward to the end.
 		this.isReversing = false;
 
+		// The reversible media element (if any) that is currently mid-way
+		// through playing its *forward* animation. Guards against a new
+		// navigation being triggered before it settles on its resting frame.
+		this.forwardBusyElement = null;
+
 		// True while we replay the "real" navigation after a reverse animation
 		// has finished. Prevents the navigation from being intercepted again.
 		this.replaying = false;
@@ -65,6 +70,104 @@ export default class ReverseAnimation {
 	isEnabled() {
 
 		return this.Reveal.getConfig().reverseAnimations !== false;
+
+	}
+
+	/**
+	 * Whether a reversible animation (forwards or backwards) is currently in
+	 * flight. Navigation should not be allowed to interrupt this, since doing
+	 * so races with the animation's own completion handling and produces
+	 * visible glitches (wrong frames flashing, navigating further than
+	 * intended).
+	 */
+	isBusy() {
+
+		return this.isReversing || !!this.forwardBusyElement;
+
+	}
+
+	/**
+	 * Whether the given media element participates in reverse animations,
+	 * i.e. is opted in via `data-reversible`, or is a slide's background
+	 * video with `reverseBackgroundVideos` enabled.
+	 *
+	 * @param {HTMLMediaElement} media
+	 */
+	isReversibleMedia( media ) {
+
+		return media.hasAttribute( 'data-reversible' ) ||
+			( this.Reveal.getConfig().reverseBackgroundVideos && !!closest( media, '.slide-background' ) );
+
+	}
+
+	/**
+	 * Called by SlideContent right before it plays a reversible media
+	 * element's forward animation. Marks the controller "busy" until the
+	 * media reaches its natural end (or its resting frame is otherwise
+	 * reached), so that a new navigation can't be triggered mid-animation.
+	 *
+	 * A safety-net timeout guarantees this never gets stuck: if `ended`
+	 * doesn't fire for any reason, navigation unblocks anyway rather than the
+	 * presentation becoming unusable.
+	 *
+	 * @param {HTMLMediaElement} media
+	 */
+	trackForwardPlay( media ) {
+
+		if( !this.isEnabled() ) return;
+		if( !this.isReversibleMedia( media ) ) return;
+
+		this.forwardBusyElement = media;
+
+		let timeoutId;
+
+		const clear = () => {
+			media.removeEventListener( 'ended', clear );
+			media.removeEventListener( 'error', clear );
+			clearTimeout( timeoutId );
+			this._clearForwardBusy( media );
+		};
+
+		// Never let navigation stay blocked forever, even if `ended` doesn't
+		// fire (e.g. a decode error that isn't reported as an 'error' event).
+		let fallbackMs = ( isFinite( media.duration ) && media.duration > 0 ? media.duration * 1000 : 4000 ) + 2000;
+		timeoutId = setTimeout( clear, fallbackMs );
+
+		media.addEventListener( 'ended', clear, { once: true } );
+		media.addEventListener( 'error', clear, { once: true } );
+
+	}
+
+	/**
+	 * Clears the forward-busy flag if it still refers to the given element.
+	 *
+	 * @param {HTMLMediaElement} media
+	 */
+	_clearForwardBusy( media ) {
+
+		if( this.forwardBusyElement === media ) {
+			this.forwardBusyElement = null;
+		}
+
+	}
+
+	/**
+	 * Fast-forwards the forward animation currently in flight (if any) to its
+	 * resting frame, immediately unblocking navigation. Used when a forward
+	 * key is pressed again while a forward animation is still playing.
+	 */
+	_fastForwardCurrentForward() {
+
+		let media = this.forwardBusyElement;
+		if( !media ) return;
+
+		try {
+			media.pause();
+			if( isFinite( media.duration ) ) media.currentTime = media.duration;
+		}
+		catch( e ) {}
+
+		this._clearForwardBusy( media );
 
 	}
 
@@ -89,6 +192,14 @@ export default class ReverseAnimation {
 		// Reverse animations only make sense in the regular linear view
 		if( this.Reveal.getConfig().rtl ) return false;
 		if( this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ) return false;
+
+		// A forward animation is still playing; catch it up to its resting
+		// frame instead of starting a reverse mid-flight (which would race
+		// with the forward animation's own completion handling).
+		if( this.forwardBusyElement ) {
+			this._fastForwardCurrentForward();
+			return true;
+		}
 
 		// A second backwards press while reversing fast-forwards to the end
 		if( this.isReversing ) {
@@ -118,6 +229,47 @@ export default class ReverseAnimation {
 		} );
 
 		return true;
+
+	}
+
+	/**
+	 * Called at the top of the forward navigation methods (navigateRight,
+	 * navigateDown, navigateNext). Mirrors `handleBackward`'s re-entrancy
+	 * guard from the other direction:
+	 *
+	 *   - If a reverse animation is currently playing, this press fast-
+	 *     forwards it to completion instead of starting a new forward move
+	 *     (which would otherwise race with the reverse's own completion
+	 *     handling and land on the wrong frame).
+	 *   - If a forward animation is currently playing, this press fast-
+	 *     forwards it to its resting frame instead of triggering another
+	 *     navigation on top of it.
+	 *
+	 * Either way, this press is swallowed; a subsequent press proceeds
+	 * normally once the in-flight animation has settled.
+	 *
+	 * @return {boolean} true if this controller has swallowed the navigation
+	 * attempt and the caller should return immediately.
+	 */
+	guardForward() {
+
+		// Let the replayed navigation (from restNavigate) run untouched
+		if( this.replaying ) return false;
+
+		if( !this.isEnabled() ) return false;
+		if( this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ) return false;
+
+		if( this.isReversing ) {
+			if( this._cancel ) this._cancel();
+			return true;
+		}
+
+		if( this.forwardBusyElement ) {
+			this._fastForwardCurrentForward();
+			return true;
+		}
+
+		return false;
 
 	}
 
@@ -322,6 +474,10 @@ export default class ReverseAnimation {
 	 * @param {'next'|'prev'} direction
 	 */
 	restNavigate( direction ) {
+
+		// Ignore this jump while an animation is still playing, rather than
+		// forcing it through and racing with that animation's completion.
+		if( this.isBusy() ) return;
 
 		let navigate = direction === 'next' ? this.Reveal.navigateRight : this.Reveal.navigateLeft;
 

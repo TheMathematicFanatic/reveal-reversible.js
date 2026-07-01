@@ -2433,6 +2433,9 @@ export default function( revealElement, options ) {
 
 	function navigateRight({skipFragments=false}={}) {
 
+		// Ignore/catch-up if an animation is still in flight
+		if( reverseAnimation.guardForward() ) return;
+
 		navigationHistory.hasNavigatedHorizontally = true;
 
 		// Scroll view navigation is handled independently
@@ -2467,6 +2470,9 @@ export default function( revealElement, options ) {
 	}
 
 	function navigateDown({skipFragments=false}={}) {
+
+		// Ignore/catch-up if an animation is still in flight
+		if( reverseAnimation.guardForward() ) return;
 
 		navigationHistory.hasNavigatedVertically = true;
 
@@ -2532,6 +2538,9 @@ export default function( revealElement, options ) {
 	 * The reverse of #navigatePrev().
 	 */
 	function navigateNext({skipFragments=false}={}) {
+
+		// Ignore/catch-up if an animation is still in flight
+		if( reverseAnimation.guardForward() ) return;
 
 		navigationHistory.hasNavigatedHorizontally = true;
 		navigationHistory.hasNavigatedVertically = true;

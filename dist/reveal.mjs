@@ -350,6 +350,7 @@ var ee = class {
 		t && n && (e.target.paused || e.target.ended) && (e.target.currentTime = 0, this.playMediaElement(e.target)), e.target.removeEventListener("loadeddata", this.startEmbeddedMedia);
 	}
 	playMediaElement(e) {
+		this.Reveal.reverseAnimation.trackForwardPlay(e);
 		let t = e.play();
 		t && typeof t.catch == "function" && t.then(() => {
 			e.muted || (this.allowedToPlayAudio = !0);
@@ -837,18 +838,48 @@ var ee = class {
 	}
 }, se = class {
 	constructor(e) {
-		this.Reveal = e, this.isReversing = !1, this.replaying = !1, this.suppressAutoplay = !1, this._cancel = null;
+		this.Reveal = e, this.isReversing = !1, this.forwardBusyElement = null, this.replaying = !1, this.suppressAutoplay = !1, this._cancel = null;
 	}
 	isEnabled() {
 		return this.Reveal.getConfig().reverseAnimations !== !1;
 	}
+	isBusy() {
+		return this.isReversing || !!this.forwardBusyElement;
+	}
+	isReversibleMedia(e) {
+		return e.hasAttribute("data-reversible") || this.Reveal.getConfig().reverseBackgroundVideos && !!o(e, ".slide-background");
+	}
+	trackForwardPlay(e) {
+		if (!this.isEnabled() || !this.isReversibleMedia(e)) return;
+		this.forwardBusyElement = e;
+		let t, n = () => {
+			e.removeEventListener("ended", n), e.removeEventListener("error", n), clearTimeout(t), this._clearForwardBusy(e);
+		}, r = (isFinite(e.duration) && e.duration > 0 ? e.duration * 1e3 : 4e3) + 2e3;
+		t = setTimeout(n, r), e.addEventListener("ended", n, { once: !0 }), e.addEventListener("error", n, { once: !0 });
+	}
+	_clearForwardBusy(e) {
+		this.forwardBusyElement === e && (this.forwardBusyElement = null);
+	}
+	_fastForwardCurrentForward() {
+		let e = this.forwardBusyElement;
+		if (e) {
+			try {
+				e.pause(), isFinite(e.duration) && (e.currentTime = e.duration);
+			} catch (e) {}
+			this._clearForwardBusy(e);
+		}
+	}
 	handleBackward(e) {
 		if (this.replaying || !this.isEnabled() || this.Reveal.getConfig().rtl || this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView()) return !1;
+		if (this.forwardBusyElement) return this._fastForwardCurrentForward(), !0;
 		if (this.isReversing) return this._cancel && this._cancel(), !0;
 		let t = this.getReversibleTarget();
 		return t ? (this.isReversing = !0, this.playReverse(t.media).then(() => {
 			this.isReversing = !1, this._cancel = null, this.suppressAutoplay = !0, this.replaying = !0, e(), this.replaying = !1, this.suppressAutoplay = !1;
 		}), !0) : !1;
+	}
+	guardForward() {
+		return this.replaying || !this.isEnabled() || this.Reveal.isScrollView() || this.Reveal.isOverview() || this.Reveal.isPrintView() ? !1 : this.isReversing ? (this._cancel && this._cancel(), !0) : this.forwardBusyElement ? (this._fastForwardCurrentForward(), !0) : !1;
 	}
 	getReversibleTarget() {
 		let e = this.Reveal.getCurrentSlide();
@@ -924,6 +955,7 @@ var ee = class {
 		return getComputedStyle(r).position === "static" && (r.style.position = "relative"), n.style.position = "absolute", n.style.left = e.offsetLeft + "px", n.style.top = e.offsetTop + "px", n.style.width = e.offsetWidth + "px", n.style.height = e.offsetHeight + "px", n.style.objectFit = getComputedStyle(e).objectFit, n.style.zIndex = 10, n;
 	}
 	restNavigate(e) {
+		if (this.isBusy()) return;
 		let t = e === "next" ? this.Reveal.navigateRight : this.Reveal.navigateLeft;
 		this.replaying = !0, this.suppressAutoplay = !0;
 		try {
@@ -2783,8 +2815,10 @@ function B(a, s) {
 		}
 	}
 	function Wt({ skipFragments: e = !1 } = {}) {
-		if (b.hasNavigatedHorizontally = !0, R.isActive()) return R.next();
-		f.rtl ? (V.isActive() || e || B.prev() === !1) && Q().right && Z(h - 1, f.navigationMode === "grid" ? _ : void 0) : (V.isActive() || e || B.next() === !1) && Q().right && Z(h + 1, f.navigationMode === "grid" ? _ : void 0);
+		if (!I.guardForward()) {
+			if (b.hasNavigatedHorizontally = !0, R.isActive()) return R.next();
+			f.rtl ? (V.isActive() || e || B.prev() === !1) && Q().right && Z(h - 1, f.navigationMode === "grid" ? _ : void 0) : (V.isActive() || e || B.next() === !1) && Q().right && Z(h + 1, f.navigationMode === "grid" ? _ : void 0);
+		}
 	}
 	function Gt({ skipFragments: e = !1 } = {}) {
 		if (!I.handleBackward(() => Gt({ skipFragments: e }))) {
@@ -2793,8 +2827,10 @@ function B(a, s) {
 		}
 	}
 	function Kt({ skipFragments: e = !1 } = {}) {
-		if (b.hasNavigatedVertically = !0, R.isActive()) return R.next();
-		(V.isActive() || e || B.next() === !1) && Q().down && Z(h, _ + 1);
+		if (!I.guardForward()) {
+			if (b.hasNavigatedVertically = !0, R.isActive()) return R.next();
+			(V.isActive() || e || B.next() === !1) && Q().down && Z(h, _ + 1);
+		}
 	}
 	function qt({ skipFragments: e = !1 } = {}) {
 		if (!I.handleBackward(() => qt({ skipFragments: e }))) {
@@ -2810,10 +2846,12 @@ function B(a, s) {
 		}
 	}
 	function Jt({ skipFragments: e = !1 } = {}) {
-		if (b.hasNavigatedHorizontally = !0, b.hasNavigatedVertically = !0, R.isActive()) return R.next();
-		if (e || B.next() === !1) {
-			let t = Q();
-			t.down && t.right && f.loop && at() && (t.down = !1), t.down ? Kt({ skipFragments: e }) : f.rtl ? Ut({ skipFragments: e }) : Wt({ skipFragments: e });
+		if (!I.guardForward()) {
+			if (b.hasNavigatedHorizontally = !0, b.hasNavigatedVertically = !0, R.isActive()) return R.next();
+			if (e || B.next() === !1) {
+				let t = Q();
+				t.down && t.right && f.loop && at() && (t.down = !1), t.down ? Kt({ skipFragments: e }) : f.rtl ? Ut({ skipFragments: e }) : Wt({ skipFragments: e });
+			}
 		}
 	}
 	function Yt(e) {

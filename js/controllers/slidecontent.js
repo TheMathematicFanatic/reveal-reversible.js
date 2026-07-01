@@ -479,6 +479,10 @@ export default class SlideContent {
 	 */
 	playMediaElement( mediaElement ) {
 
+		// Block new navigation until this reversible media reaches its
+		// resting frame, so a rapid key press can't race the animation.
+		this.Reveal.reverseAnimation.trackForwardPlay( mediaElement );
+
 		const promise = mediaElement.play();
 
 		if( promise && typeof promise.catch === 'function' ) {
