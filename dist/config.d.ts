@@ -449,6 +449,17 @@ interface RevealConfig {
      */
     autoAnimate?: boolean;
     /**
+     * Can be used to globally enable/disable reverse animations.
+     *
+     * When enabled, navigating backwards over a frame whose incoming
+     * animation is a reversible media element (marked with
+     * `data-reversible`) replays that animation in reverse instead of
+     * jumping to the previous frame and autoplaying its animation forward.
+     *
+     * @defaultValue true
+     */
+    reverseAnimations?: boolean;
+    /**
      * Optionally provide a custom element matcher that will be
      * used to dictate which elements we can animate between.
      *

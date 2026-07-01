@@ -27,6 +27,17 @@ Want to create reveal.js presentation in a graphical editor? Try <https://slides
 
 ---
 
+### This fork: Reverse Animations
+
+This fork adds **reverse animations** — navigating backwards over a frame replays
+that frame's own incoming animation (including video) *in reverse* instead of
+jumping to the previous frame and playing its animation forwards. Mark a frame's
+incoming media with `data-reversible`. See
+[docs/reverse-animations.md](docs/reverse-animations.md) and the runnable
+[examples/reverse-animation.html](examples/reverse-animation.html).
+
+---
+
 <div align="center">
   MIT licensed | Copyright © 2011-2026 Hakim El Hattab, https://hakim.se
 </div>

@@ -2331,6 +2331,20 @@ $notesWidthPercent: 25%;
 }
 
 /*********************************************
+ * REVERSE ANIMATIONS
+ *********************************************/
+
+// Buffer element used to play a pre-reversed companion video (referenced via
+// data-reverse-src) layered exactly over the original media element. It is
+// only shown while a reverse animation is in flight; otherwise it stays hidden.
+.reveal .reverse-buffer {
+	display: none;
+	margin: 0;
+	pointer-events: none;
+}
+
+
+/*********************************************
  * PRINT STYLES
  *********************************************/
 

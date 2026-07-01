@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+
+		<title>reveal.js - Reverse Animations</title>
+
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+
+		<link rel="stylesheet" href="../dist/reveal.css" />
+		<link rel="stylesheet" href="../dist/theme/white.css" id="theme" />
+	</head>
+
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Reverse Animations</h2>
+					<p>
+						Each frame is a still that a video animates <em>into</em>.
+						Press <strong>&rarr;</strong> to play the next animation forward,
+						and <strong>&larr;</strong> to replay the <em>current</em> frame's
+						incoming animation in reverse.
+					</p>
+					<p><small>Mark the incoming <code>&lt;video&gt;</code> with <code>data-reversible</code>.</small></p>
+				</section>
+
+				<!--
+					Slide model: each frame is its own <section>. The video is the
+					incoming animation; its final frame is the resting still.
+					No data-reverse-src here, so the runtime "seek" fallback is used.
+				-->
+				<section>
+					<h3>Frame A</h3>
+					<video src="assets/video.mp4" data-autoplay data-reversible width="640"></video>
+				</section>
+
+				<section>
+					<h3>Frame B</h3>
+					<video src="assets/video.mp4" data-autoplay data-reversible width="640"></video>
+				</section>
+
+				<section>
+					<h3>Frame C</h3>
+					<video src="assets/video.mp4" data-autoplay data-reversible width="640"></video>
+				</section>
+
+				<!--
+					Smoothest option: supply a pre-reversed companion clip via
+					data-reverse-src. Going backwards plays that clip forward,
+					layered over the original.
+
+					<section>
+						<h3>Frame with a pre-reversed clip</h3>
+						<video
+							src="assets/forward.mp4"
+							data-reverse-src="assets/reversed.mp4"
+							data-autoplay
+							data-reversible
+							width="640"
+						></video>
+					</section>
+				-->
+
+				<!--
+					Fragment model: each fragment is a frame within one slide.
+					Works exactly the same way — the current fragment's incoming
+					video is reversed when navigating backwards.
+				-->
+				<section>
+					<h3>Fragments as frames</h3>
+					<div class="fragment">
+						<video src="assets/video.mp4" data-autoplay data-reversible width="480"></video>
+					</div>
+					<div class="fragment">
+						<video src="assets/video.mp4" data-autoplay data-reversible width="480"></video>
+					</div>
+				</section>
+
+				<section>
+					<h3>Regular slides still behave normally</h3>
+					<p>Frames without a <code>data-reversible</code> video use reveal.js' default backwards navigation.</p>
+				</section>
+			</div>
+		</div>
+
+		<script src="../dist/reveal.js"></script>
+		<script>
+			Reveal.initialize({
+				hash: true,
+				// Feature toggle (defaults to true); set false to disable globally
+				reverseAnimations: true
+			});
+		</script>
+	</body>
+</html>

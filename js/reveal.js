@@ -3,6 +3,7 @@ import SlideNumber from './controllers/slidenumber'
 import JumpToSlide from './controllers/jumptoslide'
 import Backgrounds from './controllers/backgrounds'
 import AutoAnimate from './controllers/autoanimate'
+import ReverseAnimation from './controllers/reverseanimation'
 import ScrollView from './controllers/scrollview'
 import PrintView from './controllers/printview'
 import Fragments from './controllers/fragments'
@@ -108,6 +109,7 @@ export default function( revealElement, options ) {
 		slideNumber = new SlideNumber( Reveal ),
 		jumpToSlide = new JumpToSlide( Reveal ),
 		autoAnimate = new AutoAnimate( Reveal ),
+		reverseAnimation = new ReverseAnimation( Reveal ),
 		backgrounds = new Backgrounds( Reveal ),
 		scrollView = new ScrollView( Reveal ),
 		printView = new PrintView( Reveal ),
@@ -2408,6 +2410,9 @@ export default function( revealElement, options ) {
 
 	function navigateLeft({skipFragments=false}={}) {
 
+		// Play the current frame's incoming animation in reverse, if any
+		if( reverseAnimation.handleBackward( () => navigateLeft({skipFragments}) ) ) return;
+
 		navigationHistory.hasNavigatedHorizontally = true;
 
 		// Scroll view navigation is handled independently
@@ -2448,6 +2453,9 @@ export default function( revealElement, options ) {
 
 	function navigateUp({skipFragments=false}={}) {
 
+		// Play the current frame's incoming animation in reverse, if any
+		if( reverseAnimation.handleBackward( () => navigateUp({skipFragments}) ) ) return;
+
 		// Scroll view navigation is handled independently
 		if( scrollView.isActive() ) return scrollView.prev();
 
@@ -2479,6 +2487,9 @@ export default function( revealElement, options ) {
 	 * 3) Previous horizontal slide
 	 */
 	function navigatePrev({skipFragments=false}={}) {
+
+		// Play the current frame's incoming animation in reverse, if any
+		if( reverseAnimation.handleBackward( () => navigatePrev({skipFragments}) ) ) return;
 
 		// Scroll view navigation is handled independently
 		if( scrollView.isActive() ) return scrollView.prev();
@@ -2946,6 +2957,7 @@ export default function( revealElement, options ) {
 		keyboard,
 		fragments,
 		backgrounds,
+		reverseAnimation,
 		slideContent,
 		slideNumber,
 
