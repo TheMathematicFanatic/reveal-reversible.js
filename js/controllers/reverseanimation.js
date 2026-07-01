@@ -140,12 +140,20 @@ export default class ReverseAnimation {
 			if( media ) return { frame: currentFragment, media };
 		}
 
-		// Slide model: a reversible media element that isn't inside a fragment.
 		// Only intercept if there is somewhere to navigate back to.
 		if( this.Reveal.getSlidePastCount() > 0 ) {
+
+			// Slide model: a reversible media element that isn't in a fragment
 			let media = queryAll( slide, 'video[data-reversible], audio[data-reversible]' )
 				.find( el => !el.closest( '.fragment' ) );
 			if( media ) return { frame: slide, media };
+
+			// Background video model (e.g. Manim Slides). The <video> lives in
+			// the slide's separate .slide-background element.
+			if( this.Reveal.getConfig().reverseBackgroundVideos && slide.slideBackgroundElement ) {
+				let bgVideo = slide.slideBackgroundElement.querySelector( 'video' );
+				if( bgVideo ) return { frame: slide, media: bgVideo };
+			}
 		}
 
 		return null;

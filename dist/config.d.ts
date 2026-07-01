@@ -460,6 +460,15 @@ interface RevealConfig {
      */
     reverseAnimations?: boolean;
     /**
+     * When reverse animations are enabled, also treat each slide's
+     * background video (`data-background-video`) as its incoming reversible
+     * animation. Useful for decks where every slide is a full-frame video,
+     * such as Manim Slides exports.
+     *
+     * @defaultValue false
+     */
+    reverseBackgroundVideos?: boolean;
+    /**
      * Optionally provide a custom element matcher that will be
      * used to dictate which elements we can animate between.
      *

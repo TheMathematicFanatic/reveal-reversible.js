@@ -322,7 +322,7 @@ var ee = class {
 				e.setAttribute("src", e.getAttribute("src"));
 			}), t(e, "video, audio").forEach((e) => {
 				if (o(e, ".fragment") && !o(e, ".fragment.visible")) return;
-				if (this.Reveal.reverseAnimation.suppressAutoplay && e.hasAttribute("data-reversible")) {
+				if (this.Reveal.reverseAnimation.suppressAutoplay && (e.hasAttribute("data-reversible") || this.Reveal.getConfig().reverseBackgroundVideos && o(e, ".slide-background"))) {
 					this.Reveal.reverseAnimation.restMedia(e);
 					return;
 				}
@@ -867,6 +867,13 @@ var ee = class {
 				frame: e,
 				media: n
 			};
+			if (this.Reveal.getConfig().reverseBackgroundVideos && e.slideBackgroundElement) {
+				let t = e.slideBackgroundElement.querySelector("video");
+				if (t) return {
+					frame: e,
+					media: t
+				};
+			}
 		}
 		return null;
 	}
@@ -2195,6 +2202,7 @@ var me = class {
 	sortFragmentsOnSync: !0,
 	autoAnimate: !0,
 	reverseAnimations: !0,
+	reverseBackgroundVideos: !1,
 	autoAnimateMatcher: null,
 	autoAnimateEasing: "ease",
 	autoAnimateDuration: 1,

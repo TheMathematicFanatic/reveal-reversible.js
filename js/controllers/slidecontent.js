@@ -339,7 +339,10 @@ export default class SlideContent {
 				// When we arrive on a frame by navigating backwards, its
 				// incoming animation has just been played in reverse, so rest
 				// the media on its final frame instead of replaying it forward.
-				if( this.Reveal.reverseAnimation.suppressAutoplay && el.hasAttribute( 'data-reversible' ) ) {
+				if( this.Reveal.reverseAnimation.suppressAutoplay && (
+					el.hasAttribute( 'data-reversible' ) ||
+					( this.Reveal.getConfig().reverseBackgroundVideos && closest( el, '.slide-background' ) )
+				) ) {
 					this.Reveal.reverseAnimation.restMedia( el );
 					return;
 				}

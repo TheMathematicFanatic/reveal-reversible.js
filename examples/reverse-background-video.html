@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>reveal.js - Reverse Background Videos</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="../dist/reveal.css" />
+		<link rel="stylesheet" href="../dist/theme/black.css" id="theme" />
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<!-- Each slide's animation is a full-frame background video, like a
+				     Manim Slides export. Navigating backwards replays the current
+				     slide's background video in reverse. -->
+				<section data-background-video="assets/video.mp4" data-background-video-muted><h2>A</h2></section>
+				<section data-background-video="assets/video.mp4" data-background-video-muted><h2>B</h2></section>
+				<section data-background-video="assets/video.mp4" data-background-video-muted><h2>C</h2></section>
+			</div>
+		</div>
+		<script src="../dist/reveal.js"></script>
+		<script>
+			Reveal.initialize({
+				reverseAnimations: true,
+				reverseBackgroundVideos: true
+			});
+		</script>
+	</body>
+</html>
