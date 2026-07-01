@@ -869,10 +869,13 @@ var ee = class {
 			};
 			if (this.Reveal.getConfig().reverseBackgroundVideos && e.slideBackgroundElement) {
 				let t = e.slideBackgroundElement.querySelector("video");
-				if (t) return {
-					frame: e,
-					media: t
-				};
+				if (t) {
+					let n = e.getAttribute("data-background-video-reverse");
+					return n && !t.hasAttribute("data-reverse-src") && t.setAttribute("data-reverse-src", n), {
+						frame: e,
+						media: t
+					};
+				}
 			}
 		}
 		return null;

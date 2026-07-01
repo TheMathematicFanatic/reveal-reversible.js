@@ -152,7 +152,17 @@ export default class ReverseAnimation {
 			// the slide's separate .slide-background element.
 			if( this.Reveal.getConfig().reverseBackgroundVideos && slide.slideBackgroundElement ) {
 				let bgVideo = slide.slideBackgroundElement.querySelector( 'video' );
-				if( bgVideo ) return { frame: slide, media: bgVideo };
+				if( bgVideo ) {
+					// A pre-reversed companion clip may be supplied on the
+					// section via data-background-video-reverse. Forward it to
+					// the video as data-reverse-src so the smooth buffer path is
+					// used instead of runtime seeking.
+					let reverseSrc = slide.getAttribute( 'data-background-video-reverse' );
+					if( reverseSrc && !bgVideo.hasAttribute( 'data-reverse-src' ) ) {
+						bgVideo.setAttribute( 'data-reverse-src', reverseSrc );
+					}
+					return { frame: slide, media: bgVideo };
+				}
 			}
 		}
 
